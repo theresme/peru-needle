@@ -1,0 +1,15 @@
+# python
+backend/.venv/
+__pycache__/
+*.pyc
+
+# node
+frontend/node_modules/
+frontend/dist/
+
+# build artefato (o Docker gera isso dentro da imagem)
+backend/static/
+
+# env
+.env
+*.local

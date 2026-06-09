@@ -1,0 +1,10 @@
+# não copiar lixo pesado/local pra dentro da imagem
+**/.venv
+**/__pycache__
+**/*.pyc
+frontend/node_modules
+frontend/dist
+.git
+.gitignore
+*.md
+.claude

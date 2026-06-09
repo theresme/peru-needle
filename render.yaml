@@ -1,0 +1,14 @@
+# Blueprint do Render — sobe o painel como UM serviço web (Docker).
+# No Render: New + → "Blueprint" → aponta pro repo → ele lê este arquivo.
+services:
+  - type: web
+    name: peru-needle
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: SOURCE
+        value: onpe
+      - key: POLL_INTERVAL_SECONDS
+        value: "60"
