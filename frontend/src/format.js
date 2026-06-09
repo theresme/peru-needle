@@ -1,5 +1,5 @@
-// Formatação pt-BR/es para números grandes e percentuais.
-const nf = new Intl.NumberFormat("es-PE");
+// Formatação pt-BR para números grandes e percentuais (ponto = milhar).
+const nf = new Intl.NumberFormat("pt-BR");
 
 export const int = (n) => nf.format(Math.round(n ?? 0));
 

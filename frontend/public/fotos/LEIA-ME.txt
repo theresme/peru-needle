@@ -1,0 +1,15 @@
+FOTOS DOS CANDIDATOS
+====================
+
+Para mostrar fotos reais nos quadrados da caixa "Diferença de votos",
+coloque dois arquivos PNG aqui, com EXATAMENTE estes nomes:
+
+    keiko.png      (foto da Keiko Fujimori)
+    sanchez.png    (foto do Roberto Sánchez)
+
+- Quadradas (ex.: 200x200) ficam melhores.
+- Se os arquivos não existirem, aparecem as iniciais (KF / RS) como fallback.
+- Depois de adicionar, faça: git add -A && git commit -m "fotos" && git push
+  (o Render publica sozinho).
+
+Atenção: use imagens que você tenha direito de usar.
