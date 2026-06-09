@@ -202,6 +202,72 @@ def compute_last_hour(history: deque, cur: dict) -> dict:
     return base
 
 
+def compute_virada(history: deque, cur: dict, modelo: dict) -> dict:
+    """'Conta-giro' da virada: quanto falta p/ o gap zerar, saldo de votos
+    restante a favor de cada um, e ETA ao vivo se houver ritmo de contagem."""
+    gap = cur["vK"] - cur["vS"]          # <0 => Sánchez na frente
+    quem_atras = "keiko" if gap < 0 else ("sanchez" if gap > 0 else None)
+    faltam = abs(gap) if gap < 0 else 0
+
+    rd = modelo.get("votosRestantesDom", 0)
+    re = modelo.get("votosRestantesExt", 0)
+    ls = modelo.get("leanRestanteDomSanchez", 50.0) / 100.0
+    lk = modelo.get("leanRestanteExtKeiko", 50.0) / 100.0
+    net_dom = rd * (1.0 - 2.0 * ls)      # >0 favorece Keiko
+    net_ext = re * (2.0 * lk - 1.0)
+    net_total = net_dom + net_ext        # saldo líquido p/ Keiko no que falta
+
+    net_atras = net_total if quem_atras == "keiko" else (-net_total if quem_atras == "sanchez" else 0)
+    projeta_virar = quem_atras is not None and net_atras > faltam
+
+    # ritmo ativo (net Keiko/min) na última janela + detecção de pausa
+    pts = [(datetime.fromisoformat(h["t"]), h["vK"], h["vS"]) for h in history if "vK" in h]
+    now = cur["t"]
+    allpts = pts + [(now, cur["vK"], cur["vS"])]
+    last_move = None
+    for i in range(len(allpts) - 1, 0, -1):
+        if (allpts[i][1] + allpts[i][2]) != (allpts[i - 1][1] + allpts[i - 1][2]):
+            last_move = allpts[i][0]
+            break
+    min_sem_mov = (now - last_move).total_seconds() / 60.0 if last_move else None
+
+    netps = None
+    tot_net = tot_min = 0.0
+    recent = [p for p in allpts if (now - p[0]).total_seconds() <= 45 * 60]
+    for i in range(1, len(recent)):
+        dv = (recent[i][1] + recent[i][2]) - (recent[i - 1][1] + recent[i - 1][2])
+        if dv > 0:
+            tot_min += (recent[i][0] - recent[i - 1][0]).total_seconds() / 60.0
+            tot_net += (recent[i][1] - recent[i - 1][1]) - (recent[i][2] - recent[i - 1][2])
+    if tot_min >= 1:
+        netps = tot_net / tot_min
+
+    pausada = (min_sem_mov is None) or (min_sem_mov > 6)
+    eta_min = eta_iso = None
+    if quem_atras and not pausada and netps is not None:
+        rate_close = netps if quem_atras == "keiko" else -netps
+        if rate_close > 5:
+            eta_min = faltam / rate_close
+            eta_iso = (now + timedelta(minutes=eta_min)).isoformat()
+
+    estado = "virou" if gap >= 0 else ("pausada" if pausada else "contando")
+    return {
+        "estado": estado,
+        "quemAtras": quem_atras,
+        "quemFrente": "sanchez" if quem_atras == "keiko" else ("keiko" if quem_atras == "sanchez" else None),
+        "gapAtual": int(abs(gap)),
+        "faltamParaVirar": int(faltam),
+        "saldoRestante": int(net_total),     # >0 favorece Keiko
+        "saldoDom": int(net_dom),
+        "saldoExt": int(net_ext),
+        "projetaVirar": bool(projeta_virar),
+        "minSemMovimento": round(min_sem_mov) if min_sem_mov is not None else None,
+        "ritmoNetMin": round(netps) if netps is not None else None,
+        "etaMin": round(eta_min) if eta_min is not None else None,
+        "etaISO": eta_iso,
+    }
+
+
 async def poll_once() -> None:
     source = get_source(config.SOURCE)
     try:
@@ -214,6 +280,7 @@ async def poll_once() -> None:
             "pctK": state["candidatos"][0]["pctAtual"],
         }
         state["ultimaHora"] = compute_last_hour(cache.history, cur)
+        state["virada"] = compute_virada(cache.history, cur, state["modelo"])
         # detecta acontecimentos comparando com o snapshot anterior
         try:
             for ev in detectar_eventos(cache.state, state):

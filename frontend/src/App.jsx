@@ -4,6 +4,7 @@ import Needle from "./components/Needle";
 import Sparkline from "./components/Sparkline";
 import CandidateCards from "./components/CandidateCards";
 import VoteGap from "./components/VoteGap";
+import ViradaCard from "./components/ViradaCard";
 import LastHour from "./components/LastHour";
 import TallyBar from "./components/TallyBar";
 import WhatsLeft from "./components/WhatsLeft";
@@ -44,6 +45,8 @@ export default function App() {
             <CandidateCards candidatos={state.candidatos} ultimaHora={state.ultimaHora} />
 
             <VoteGap candidatos={state.candidatos} tick={state.timestamp} />
+
+            <ViradaCard virada={state.virada} />
 
             <LastHour ultimaHora={state.ultimaHora} />
 
