@@ -11,7 +11,7 @@ import asyncio
 import logging
 from collections import deque
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -139,11 +139,81 @@ def build_state(tally: RawTally) -> dict:
     }
 
 
+MOMENTUM_JANELA_MIN = 60  # janela alvo p/ "última hora"
+
+
+def compute_last_hour(history: deque, cur: dict) -> dict:
+    """Variação de votos/participação na última hora (ou no maior intervalo
+    disponível, se ainda não houver 1h de dados). Define quem está SUBINDO."""
+    base = {"janelaMin": MOMENTUM_JANELA_MIN, "spanMin": 0, "suficiente": False,
+            "subindo": None, "deltaVotosK": 0, "deltaVotosS": 0,
+            "deltaVotosTotal": 0, "deltaPctK": 0.0, "splitK": 0.0, "splitS": 0.0}
+    if not history:
+        return base
+
+    now = cur["t"]
+    alvo = now - timedelta(minutes=MOMENTUM_JANELA_MIN)
+    ref = None
+    for h in history:  # deque: mais antigo → mais novo
+        try:
+            ht = datetime.fromisoformat(h["t"])
+        except Exception:  # noqa: BLE001
+            continue
+        if ht <= alvo:
+            ref = h            # mantém o mais NOVO que ainda é ≥1h atrás
+    if ref is None:
+        ref = history[0]       # ainda não há 1h: usa o ponto mais antigo
+
+    ht = datetime.fromisoformat(ref["t"])
+    span = (now - ht).total_seconds() / 60.0
+    dK = cur["vK"] - ref.get("vK", cur["vK"])
+    dS = cur["vS"] - ref.get("vS", cur["vS"])
+    dpK = cur["pctK"] - ref.get("pctK", cur["pctK"])
+    tot = dK + dS
+
+    splitK = (100.0 * dK / tot) if tot > 0 else 0.0
+    splitS = (100.0 * dS / tot) if tot > 0 else 0.0
+
+    # Quem está SUBINDO = quem leva, nos votos recentes, uma fatia acima da sua
+    # média atual. Esse sinal é sensível mesmo no fim da apuração (quando a %
+    # nacional quase não se mexe), porque compara o ritmo recente com o acumulado.
+    pctK_atual = cur.get("pctK", 50.0)
+    subindo = None
+    if tot > 0:
+        if splitK > pctK_atual + 0.5:
+            subindo = "keiko"
+        elif splitK < pctK_atual - 0.5:
+            subindo = "sanchez"
+
+    base.update({
+        "spanMin": round(span),
+        "suficiente": span >= 3 and tot > 0,
+        "deltaVotosK": int(dK),
+        "deltaVotosS": int(dS),
+        "deltaVotosTotal": int(tot),
+        "deltaPctK": round(dpK, 3),
+        "subindo": subindo,
+        "splitK": round(splitK, 1),
+        "splitS": round(splitS, 1),
+        # "vantagem" = quanto a fatia recente supera a média atual (pp)
+        "vantagemK": round(splitK - pctK_atual, 1),
+        "vantagemS": round(splitS - (100.0 - pctK_atual), 1),
+    })
+    return base
+
+
 async def poll_once() -> None:
     source = get_source(config.SOURCE)
     try:
         tally = await source.fetch()
         state = build_state(tally)
+        # momentum: variação de votos na última hora (usa histórico anterior)
+        cur = {
+            "t": datetime.fromisoformat(state["timestamp"]),
+            "vK": state["vK"], "vS": state["vS"],
+            "pctK": state["candidatos"][0]["pctAtual"],
+        }
+        state["ultimaHora"] = compute_last_hour(cache.history, cur)
         # detecta acontecimentos comparando com o snapshot anterior
         try:
             for ev in detectar_eventos(cache.state, state):
@@ -159,6 +229,9 @@ async def poll_once() -> None:
                 "pctApurado": state["pctApurado"],
                 "pKeiko": state["modelo"]["pVitoriaKeiko"],
                 "margemP50": state["modelo"]["margemP50"],
+                "vK": state["vK"],
+                "vS": state["vS"],
+                "pctK": state["candidatos"][0]["pctAtual"],
             }
         )
         log.info(

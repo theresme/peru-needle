@@ -3,6 +3,7 @@ import Header from "./components/Header";
 import Needle from "./components/Needle";
 import Sparkline from "./components/Sparkline";
 import CandidateCards from "./components/CandidateCards";
+import LastHour from "./components/LastHour";
 import TallyBar from "./components/TallyBar";
 import WhatsLeft from "./components/WhatsLeft";
 import ExpectedFinal from "./components/ExpectedFinal";
@@ -39,7 +40,9 @@ export default function App() {
               <Sparkline tick={state.timestamp} />
             </section>
 
-            <CandidateCards candidatos={state.candidatos} />
+            <CandidateCards candidatos={state.candidatos} ultimaHora={state.ultimaHora} />
+
+            <LastHour ultimaHora={state.ultimaHora} />
 
             <ExpectedFinal modelo={state.modelo} />
 

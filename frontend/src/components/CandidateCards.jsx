@@ -1,6 +1,28 @@
 import { int, pct } from "../format";
 
-function Card({ c, lider }) {
+// Seta de momentum: ▲ sobe (verde) · ▼ desce (vermelho)
+// Mostra a fatia dos votos recentes que o candidato está levando.
+function Momentum({ tendencia, split }) {
+  if (!tendencia) return null;
+  const sobe = tendencia === "sobe";
+  const cor = sobe ? "#10b981" : "#ef4444";
+  const seta = sobe ? "▲" : "▼";
+  const label = split != null ? `${Math.round(split)}% dos novos` : "";
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold"
+      style={{ background: `${cor}1f`, color: cor }}
+      title={sobe
+        ? "Ganhando terreno: leva uma fatia dos votos recentes acima da sua média"
+        : "Perdendo terreno: leva uma fatia dos votos recentes abaixo da sua média"}
+    >
+      <span className="text-xs leading-none">{seta}</span>
+      {label}
+    </span>
+  );
+}
+
+function Card({ c, lider, tendencia, split }) {
   return (
     <div
       className="relative flex-1 rounded-2xl bg-panel border border-hair p-5 overflow-hidden fade-in"
@@ -24,8 +46,13 @@ function Card({ c, lider }) {
         )}
       </div>
 
-      <div className="mt-4 num text-6xl font-extrabold leading-none" style={{ color: c.cor }}>
-        {pct(c.pctAtual, 1)}
+      <div className="mt-4 flex items-end gap-3">
+        <div className="num text-6xl font-extrabold leading-none" style={{ color: c.cor }}>
+          {pct(c.pctAtual, 1)}
+        </div>
+        <div className="mb-1">
+          <Momentum tendencia={tendencia} split={split} />
+        </div>
       </div>
 
       <div className="mt-3 flex items-end justify-between">
@@ -39,14 +66,26 @@ function Card({ c, lider }) {
   );
 }
 
-export default function CandidateCards({ candidatos }) {
+export default function CandidateCards({ candidatos, ultimaHora }) {
   if (!candidatos) return null;
   const [a, b] = candidatos;
   const liderId = a.pctAtual >= b.pctAtual ? a.id : b.id;
+
+  // tendência por candidato a partir do momentum da última hora
+  const uh = ultimaHora;
+  const tend = (id) => {
+    if (!uh || !uh.suficiente || !uh.subindo) return null;
+    return uh.subindo === id ? "sobe" : "desce";
+  };
+  const split = (id) => {
+    if (!uh || !uh.suficiente) return null;
+    return id === "keiko" ? uh.splitK : uh.splitS;
+  };
+
   return (
     <div className="flex flex-col sm:flex-row gap-4">
-      <Card c={a} lider={a.id === liderId} />
-      <Card c={b} lider={b.id === liderId} />
+      <Card c={a} lider={a.id === liderId} tendencia={tend(a.id)} split={split(a.id)} />
+      <Card c={b} lider={b.id === liderId} tendencia={tend(b.id)} split={split(b.id)} />
     </div>
   );
 }
