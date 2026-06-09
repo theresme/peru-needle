@@ -370,7 +370,28 @@ async def health():
 import os  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
+
+class SmartStatic(StaticFiles):
+    """Serve o frontend com cache inteligente:
+    - /assets/* (nomes com hash, imutáveis) → cache longo (1 ano)
+    - resto, inclusive index.html → no-cache (revalida sempre)
+    Assim toda atualização aparece na hora, sem Ctrl+Shift+R, mas o navegador
+    ainda reaproveita os bundles pesados que não mudaram.
+    """
+    async def get_response(self, path, scope):
+        resp = await super().get_response(path, scope)
+        try:
+            norm = path.replace("\\", "/")  # Windows normpath usa "\"
+            if norm.startswith("assets/"):
+                resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+            else:
+                resp.headers["Cache-Control"] = "no-cache, must-revalidate"
+        except Exception:  # noqa: BLE001
+            pass
+        return resp
+
+
 _STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 if os.path.isdir(_STATIC_DIR):
-    app.mount("/", StaticFiles(directory=_STATIC_DIR, html=True), name="frontend")
+    app.mount("/", SmartStatic(directory=_STATIC_DIR, html=True), name="frontend")
     log.info("Servindo frontend estático de %s", _STATIC_DIR)
