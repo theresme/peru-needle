@@ -111,7 +111,7 @@ export default function Needle({ modelo }) {
         {[-90, -45, 0, 45, 90].map((tk) => {
           const a = arcPoint(tk, R - 28);
           const b = arcPoint(tk, R - 40);
-          return <line key={tk} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#3a414c" strokeWidth="2" />;
+          return <line key={tk} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#4a2f36" strokeWidth="2" />;
         })}
 
         <text x={CX - R + 2} y={CY + 26} fill={SANCHEZ} fontSize="13" fontWeight="700" textAnchor="start">
@@ -135,7 +135,7 @@ export default function Needle({ modelo }) {
           strokeLinecap="round"
           style={{ filter: `drop-shadow(0 0 6px ${favColor}66)` }}
         />
-        <circle ref={hubRef} cx={CX} cy={CY} r="11" fill="#0e1116" stroke={favColor} strokeWidth="3" />
+        <circle ref={hubRef} cx={CX} cy={CY} r="11" fill="#12090b" stroke={favColor} strokeWidth="3" />
       </svg>
 
       <div className="-mt-2 text-center fade-in">

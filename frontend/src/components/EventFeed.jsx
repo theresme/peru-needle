@@ -49,7 +49,7 @@ export default function EventFeed({ eventos }) {
                 {/* bolinha da timeline */}
                 <span
                   className="absolute -left-[7px] flex h-3.5 w-3.5 items-center justify-center rounded-full"
-                  style={{ background: "#0e1116", boxShadow: `0 0 0 2px ${cfg.ring}` }}
+                  style={{ background: "#12090b", boxShadow: `0 0 0 2px ${cfg.ring}` }}
                 />
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -79,7 +79,7 @@ function Header({ n }) {
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <span className="live-dot inline-block h-2 w-2 rounded-full bg-emerald-400" />
+        <span className="live-dot inline-block h-2 w-2 rounded-full bg-peru" />
         <span className="text-sm font-semibold text-gray-200">Últimos acontecimentos</span>
       </div>
       {n > 0 && (

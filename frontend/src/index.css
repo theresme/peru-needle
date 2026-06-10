@@ -14,8 +14,11 @@ body,
 
 body {
   margin: 0;
-  background: theme("colors.ink");
-  color: #e7ecf3;
+  /* halo "rojo peruano" sutil descendo do topo */
+  background:
+    radial-gradient(70% 24rem at 50% 0%, rgba(217, 16, 35, 0.09), transparent 70%),
+    theme("colors.ink");
+  color: #f0e9e3;
   font-family: theme("fontFamily.sans");
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -51,20 +54,21 @@ body {
   pointer-events: none;
   background:
     radial-gradient(38% 42% at 72% 30%, rgba(245, 158, 11, 0.10), transparent 70%),
-    radial-gradient(38% 42% at 28% 30%, rgba(59, 130, 246, 0.10), transparent 70%);
+    radial-gradient(38% 42% at 28% 30%, rgba(59, 130, 246, 0.10), transparent 70%),
+    radial-gradient(50% 28% at 50% 0%, rgba(217, 16, 35, 0.07), transparent 70%);
 }
 
 /* scrollbar discreta no tema escuro */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2a313c transparent;
+  scrollbar-color: #3c252b transparent;
 }
 *::-webkit-scrollbar {
   width: 9px;
   height: 9px;
 }
 *::-webkit-scrollbar-thumb {
-  background: #2a313c;
+  background: #3c252b;
   border-radius: 9px;
 }
 *::-webkit-scrollbar-track {
@@ -72,5 +76,5 @@ body {
 }
 
 ::selection {
-  background: rgba(245, 158, 11, 0.35);
+  background: rgba(217, 16, 35, 0.4);
 }

@@ -60,7 +60,7 @@ function GapChart({ history }) {
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 90 }} preserveAspectRatio="none">
         {/* faixa Keiko (cima) e Sánchez (baixo) sutil */}
-        <line x1="0" y1={H / 2} x2={W} y2={H / 2} stroke="#3a414c" strokeWidth="1" strokeDasharray="4 4" />
+        <line x1="0" y1={H / 2} x2={W} y2={H / 2} stroke="#4a2f36" strokeWidth="1" strokeDasharray="4 4" />
         <path d={area} fill={cor} opacity="0.13" />
         <path d={line} fill="none" stroke={cor} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
         <circle cx={x(gaps.length - 1)} cy={y(ultimo)} r="3.5" fill={cor} />

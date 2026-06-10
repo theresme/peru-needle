@@ -7,8 +7,8 @@ export default function ApuradoBar({ pctApurado }) {
       title={`${pctApurado}% apurado`}
     >
       <div
-        className="h-full bg-gradient-to-r from-emerald-500 to-emerald-300 transition-[width] duration-1000"
-        style={{ width: `${Math.min(100, pctApurado)}%`, boxShadow: "0 0 8px #10b98188" }}
+        className="h-full bg-gradient-to-r from-perudark via-peru to-crema transition-[width] duration-1000"
+        style={{ width: `${Math.min(100, pctApurado)}%`, boxShadow: "0 0 8px #D9102388" }}
       />
     </div>
   );

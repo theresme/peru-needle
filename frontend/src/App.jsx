@@ -41,7 +41,7 @@ export default function App() {
         {state && (
           <main className="mt-8 space-y-6">
             {/* HERO: agulha */}
-            <section className="hero-glow relative overflow-hidden rounded-2xl bg-gradient-to-b from-panel to-ink border border-hair p-6 sm:p-8">
+            <section className="hero-glow relative overflow-hidden rounded-2xl bg-gradient-to-b from-panel to-ink border border-hair border-t-2 border-t-peru/70 p-6 sm:p-8">
               <Needle modelo={state.modelo} />
               <Sparkline tick={state.timestamp} />
             </section>

@@ -1,4 +1,5 @@
 import { useAgo } from "../hooks/usePoll";
+import Flag from "./Flag";
 
 export default function Header({ lastFetch, fonte, pollSeconds, onRefresh, error }) {
   const ago = useAgo(lastFetch);
@@ -6,13 +7,14 @@ export default function Header({ lastFetch, fonte, pollSeconds, onRefresh, error
     <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
       <div>
         <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-gray-500">
-          <span className="live-dot inline-block h-2 w-2 rounded-full bg-emerald-400" />
-          Painel ao vivo · não-oficial
+          <span className="live-dot inline-block h-2 w-2 rounded-full bg-peru" />
+          <span className="text-peru/90 font-semibold">En vivo</span>
+          <span>· painel não-oficial</span>
         </div>
-        <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
-          <span className="mr-2">🇵🇪</span>
-          <span className="bg-gradient-to-r from-gray-50 via-gray-200 to-gray-400 bg-clip-text text-transparent">
-            2ª volta · Peru 2026
+        <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight flex items-center gap-3">
+          <Flag width={38} height={26} />
+          <span className="bg-gradient-to-r from-crema via-gray-200 to-gray-400 bg-clip-text text-transparent">
+            2ª volta · Perú 2026
           </span>
         </h1>
         <p className="text-sm text-gray-400">
@@ -34,7 +36,7 @@ export default function Header({ lastFetch, fonte, pollSeconds, onRefresh, error
         </div>
         <button
           onClick={onRefresh}
-          className="rounded-lg border border-hair bg-panel px-3 py-2 text-sm text-gray-200 hover:bg-panel2 transition"
+          className="rounded-lg border border-hair bg-panel px-3 py-2 text-sm text-gray-200 hover:bg-panel2 hover:border-peru/50 transition"
           title="Atualizar agora"
         >
           ↻

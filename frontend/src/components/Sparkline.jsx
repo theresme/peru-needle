@@ -29,7 +29,7 @@ export default function Sparkline({ tick }) {
         evolução P(Keiko)
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-[220px] h-[40px]">
-        <line x1="0" y1={H / 2} x2={W} y2={H / 2} stroke="#2a313c" strokeWidth="1" strokeDasharray="3 3" />
+        <line x1="0" y1={H / 2} x2={W} y2={H / 2} stroke="#4a2f36" strokeWidth="1" strokeDasharray="3 3" />
         <path d={path} fill="none" stroke="#9aa4b2" strokeWidth="2" strokeLinejoin="round" />
       </svg>
     </div>
