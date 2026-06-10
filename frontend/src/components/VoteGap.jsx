@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { int } from "../format";
 import { fetchHistory } from "../api";
+import { useCountUp } from "../hooks/useCountUp";
 
 const KEIKO = "#f59e0b";
 const SANCHEZ = "#3b82f6";
@@ -81,11 +82,16 @@ export default function VoteGap({ candidatos, tick }) {
       .catch(() => {});
   }, [tick]);
 
-  if (!candidatos || candidatos.length < 2) return null;
-  const [a, b] = candidatos;
-  const keiko = a.id === "keiko" ? a : b;
-  const sanchez = a.id === "sanchez" ? a : b;
-  const gap = Math.abs(keiko.votos - sanchez.votos);
+  // hooks sempre antes de qualquer return condicional
+  const ok = candidatos && candidatos.length >= 2;
+  const [a, b] = ok ? candidatos : [null, null];
+  const keiko = ok ? (a.id === "keiko" ? a : b) : null;
+  const sanchez = ok ? (a.id === "sanchez" ? a : b) : null;
+  const gap = ok ? Math.abs(keiko.votos - sanchez.votos) : 0;
+  const gapAnim = useCountUp(gap);
+  const vKAnim = useCountUp(keiko?.votos ?? 0);
+  const vSAnim = useCountUp(sanchez?.votos ?? 0);
+  if (!ok) return null;
   const lider = keiko.votos >= sanchez.votos ? keiko : sanchez;
 
   return (
@@ -98,7 +104,7 @@ export default function VoteGap({ candidatos, tick }) {
           {lider.id === "keiko" ? "Keiko" : "Sánchez"} à frente por
         </div>
         <div className="num text-4xl sm:text-5xl font-extrabold leading-tight" style={{ color: lider.cor }}>
-          {int(gap)}
+          {int(gapAnim)}
         </div>
         <div className="num text-[11px] text-gray-500">votos</div>
       </div>
@@ -109,14 +115,14 @@ export default function VoteGap({ candidatos, tick }) {
           <Avatar c={keiko} size={48} />
           <div className="min-w-0">
             <div className="text-xs font-semibold" style={{ color: KEIKO }}>Keiko</div>
-            <div className="num text-base font-bold text-gray-100 leading-tight">{int(keiko.votos)}</div>
+            <div className="num text-base font-bold text-gray-100 leading-tight">{int(vKAnim)}</div>
           </div>
         </div>
         <div className="flex items-center gap-3 rounded-xl bg-panel2 border border-hair p-3">
           <Avatar c={sanchez} size={48} />
           <div className="min-w-0">
             <div className="text-xs font-semibold" style={{ color: SANCHEZ }}>Sánchez</div>
-            <div className="num text-base font-bold text-gray-100 leading-tight">{int(sanchez.votos)}</div>
+            <div className="num text-base font-bold text-gray-100 leading-tight">{int(vSAnim)}</div>
           </div>
         </div>
       </div>

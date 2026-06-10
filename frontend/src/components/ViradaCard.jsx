@@ -1,4 +1,5 @@
 import { int } from "../format";
+import { useCountUp } from "../hooks/useCountUp";
 
 const KEIKO = "#f59e0b";
 const SANCHEZ = "#3b82f6";
@@ -20,6 +21,8 @@ function etaTexto(min) {
 }
 
 export default function ViradaCard({ virada }) {
+  // hook antes de qualquer return condicional
+  const faltamAnim = useCountUp(virada?.faltamParaVirar ?? 0);
   if (!virada) return null;
   const v = virada;
 
@@ -70,7 +73,7 @@ export default function ViradaCard({ virada }) {
           faltam p/ {atrasNome} virar
         </div>
         <div className="num text-4xl font-extrabold leading-tight" style={{ color: atrasCor }}>
-          {int(v.faltamParaVirar)}
+          {int(faltamAnim)}
         </div>
         <div className="num text-[11px] text-gray-500">votos</div>
       </div>

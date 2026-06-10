@@ -14,12 +14,16 @@ import WatchList from "./components/WatchList";
 import ReasonsToWin from "./components/ReasonsToWin";
 import DepartmentTable from "./components/DepartmentTable";
 import Footer from "./components/Footer";
+import StickyScore from "./components/StickyScore";
+import ApuradoBar from "./components/ApuradoBar";
 
 export default function App() {
   const { state, error, loading, lastFetch, refresh } = usePoll();
 
   return (
     <div className="min-h-full">
+      <ApuradoBar pctApurado={state?.pctApurado} />
+      <StickyScore state={state} />
       <div className="mx-auto max-w-5xl px-4 py-8 sm:py-12">
         <Header
           lastFetch={lastFetch}
@@ -37,7 +41,7 @@ export default function App() {
         {state && (
           <main className="mt-8 space-y-6">
             {/* HERO: agulha */}
-            <section className="rounded-2xl bg-gradient-to-b from-panel to-ink border border-hair p-6 sm:p-8">
+            <section className="hero-glow relative overflow-hidden rounded-2xl bg-gradient-to-b from-panel to-ink border border-hair p-6 sm:p-8">
               <Needle modelo={state.modelo} />
               <Sparkline tick={state.timestamp} />
             </section>

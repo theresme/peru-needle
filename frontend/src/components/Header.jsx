@@ -9,11 +9,16 @@ export default function Header({ lastFetch, fonte, pollSeconds, onRefresh, error
           <span className="live-dot inline-block h-2 w-2 rounded-full bg-emerald-400" />
           Painel ao vivo · não-oficial
         </div>
-        <h1 className="font-display text-3xl sm:text-4xl font-bold text-gray-50 mt-1 leading-tight">
-          2ª volta · Peru 2026
+        <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
+          <span className="mr-2">🇵🇪</span>
+          <span className="bg-gradient-to-r from-gray-50 via-gray-200 to-gray-400 bg-clip-text text-transparent">
+            2ª volta · Peru 2026
+          </span>
         </h1>
         <p className="text-sm text-gray-400">
-          Keiko Fujimori <span className="text-gray-600">vs</span> Roberto Sánchez
+          <span className="font-semibold text-keiko">Keiko Fujimori</span>{" "}
+          <span className="text-gray-600">vs</span>{" "}
+          <span className="font-semibold text-sanchez">Roberto Sánchez</span>
         </p>
       </div>
 

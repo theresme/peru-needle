@@ -1,4 +1,5 @@
 import { int, pct } from "../format";
+import { useCountUp } from "../hooks/useCountUp";
 
 // Seta de momentum: ▲ sobe (verde) · ▼ desce (vermelho)
 // Mostra a fatia dos votos recentes que o candidato está levando.
@@ -23,6 +24,8 @@ function Momentum({ tendencia, split }) {
 }
 
 function Card({ c, lider, tendencia, split }) {
+  const pctAnim = useCountUp(c.pctAtual);
+  const votosAnim = useCountUp(c.votos);
   return (
     <div
       className="relative flex-1 rounded-2xl bg-panel border border-hair p-5 overflow-hidden fade-in"
@@ -48,7 +51,7 @@ function Card({ c, lider, tendencia, split }) {
 
       <div className="mt-4 flex items-end gap-3">
         <div className="num text-6xl font-extrabold leading-none" style={{ color: c.cor }}>
-          {pct(c.pctAtual, 1)}
+          {pct(pctAnim, 1)}
         </div>
         <div className="mb-1">
           <Momentum tendencia={tendencia} split={split} />
@@ -56,7 +59,7 @@ function Card({ c, lider, tendencia, split }) {
       </div>
 
       <div className="mt-3 flex items-end justify-between">
-        <div className="num text-sm text-gray-300">{int(c.votos)} votos</div>
+        <div className="num text-sm text-gray-300">{int(votosAnim)} votos</div>
         <div className="text-right">
           <div className="text-[10px] uppercase tracking-wider text-gray-500">projeção final</div>
           <div className="num text-base font-semibold text-gray-200">{pct(c.projFinal, 1)}</div>
