@@ -48,6 +48,67 @@ ID_JUNTOS_PERU = 10      # Roberto Sánchez
 AMBITO_NACIONAL = 1      # Peru (doméstico)
 AMBITO_EXTRANJERO = 2    # Exterior
 
+# Tradução ES→PT dos nomes que a ONPE manda (já title-cased). O que não
+# estiver aqui sai como veio (Chile, Argentina, Brasil, Portugal…).
+_PAIS_PT: dict[str, str] = {
+    "Estados Unidos De Ámerica": "Estados Unidos",
+    "España": "Espanha",
+    "Italia": "Itália",
+    "Japón": "Japão",
+    "Bolivia": "Bolívia",
+    "Francia": "França",
+    "Alemania": "Alemanha",
+    "Ecuador": "Equador",
+    "Colombia": "Colômbia",
+    "Suiza": "Suíça",
+    "Australia": "Austrália",
+    "Gran Bretaña": "Reino Unido",
+    "Suecia": "Suécia",
+    "Uruguay": "Uruguai",
+    "Antillas Holandesas": "Antilhas Holandesas",
+    "Paraguay": "Paraguai",
+    "Guayana Francesa": "Guiana Francesa",
+    "Nueva Zelanda": "Nova Zelândia",
+    "Puerto Rico": "Porto Rico",
+    "Austria": "Áustria",
+    "Gran Ducado De Luxemburgo": "Luxemburgo",
+    "República Popular China": "China",
+    "Rusia": "Rússia",
+    "Republica De Corea": "Coreia do Sul",
+    "Hungría": "Hungria",
+    "Principado De Andorra": "Andorra",
+    "Finlandia": "Finlândia",
+    "Emiratos Árabes Unidos": "Emirados Árabes Unidos",
+    "República Checa": "República Tcheca",
+    "Polonia": "Polônia",
+    "Nicaragua": "Nicarágua",
+    "Rumanía": "Romênia",
+    "Grecia": "Grécia",
+    "Jordania": "Jordânia",
+    "Singapur": "Singapura",
+    "Turquía": "Turquia",
+    "Sudáfrica": "África do Sul",
+    "Tailandia": "Tailândia",
+    "Arabia Saudita": "Arábia Saudita",
+    "Bielorrusia": "Bielorrússia",
+    "República Árabe De Egipto": "Egito",
+    "Marruecos": "Marrocos",
+    "India": "Índia",
+    "Indonesia": "Indonésia",
+    "Argelia": "Argélia",
+    "Trinidad Y Tobago": "Trinidad e Tobago",
+    "Malasia": "Malásia",
+    "Vietnam": "Vietnã",
+    "Macedonia": "Macedônia do Norte",
+    "Kenia": "Quênia",
+    "Ghana": "Gana",
+    "Irán": "Irã",
+}
+_CONT_PT: dict[str, str] = {
+    "Asia": "Ásia",
+    "Oceanía": "Oceania",
+}
+
 # ubigeoNivel01 do mapa-calor = código do departamento × 10000.
 _DEPT_NOME: dict[int, str] = {
     1: "Amazonas", 2: "Áncash", 3: "Apurímac", 4: "Arequipa", 5: "Ayacucho",
@@ -175,8 +236,11 @@ class OnpeSource:
         nomes: dict[str, tuple[str, str]] = {}
         for c, paises in zip(conts, listas):
             cont_nome = (c.get("nombre") or "").strip().title()
+            cont_nome = _CONT_PT.get(cont_nome, cont_nome)
             for p in paises or []:
-                nomes[str(p["ubigeo"])] = ((p.get("nombre") or "").strip().title(), cont_nome)
+                nome = (p.get("nombre") or "").strip().title()
+                nome = _PAIS_PT.get(nome, nome)
+                nomes[str(p["ubigeo"])] = (nome, cont_nome)
         type(self)._nomes_paises = nomes
         type(self)._continentes = [str(c["ubigeo"]) for c in conts]
         log.info("exterior: %s continentes, %s países mapeados", len(conts), len(nomes))
