@@ -1,15 +1,20 @@
 FOTOS DOS CANDIDATOS
 ====================
 
-Para mostrar fotos reais nos quadrados da caixa "Diferença de votos",
-coloque dois arquivos PNG aqui, com EXATAMENTE estes nomes:
+Os quadrados do placar aceitam png, jpg, jpeg ou webp. Nomes esperados:
 
-    keiko.png      (foto da Keiko Fujimori)
-    sanchez.png    (foto do Roberto Sánchez)
+    keiko.<ext>      (foto da Keiko Fujimori)
+    sanchez.<ext>    (foto do Roberto Sánchez)
 
-- Quadradas (ex.: 200x200) ficam melhores.
-- Se os arquivos não existirem, aparecem as iniciais (KF / RS) como fallback.
-- Depois de adicionar, faça: git add -A && git commit -m "fotos" && git push
-  (o Render publica sozinho).
+- Os quadrados recortam qualquer proporção (object-cover, mira o rosto).
+- Se o arquivo não existir, aparecem as iniciais (KF / RS) como fallback.
 
-Atenção: use imagens que você tenha direito de usar.
+FOTOS ATUAIS (licença livre, via Wikimedia Commons):
+- keiko.jpg   — Keiko Fujimori. Autor: CarlosEduardoPA. Licença: CC BY 4.0.
+  https://commons.wikimedia.org/wiki/File:260406-MITIN-KEIKO-PIURA-064_(cropped).jpg
+- sanchez.jpg — Roberto Sánchez. Autor: Ministerio de la Producción.
+  Licença: domínio público.
+  https://commons.wikimedia.org/wiki/File:Congresista_Roberto_S._Palomino.jpg
+
+O crédito da CC BY 4.0 (Keiko) está no rodapé do site, como exige a licença.
+Se trocar a foto da Keiko, mantenha (ou atualize) o crédito no Footer.jsx.

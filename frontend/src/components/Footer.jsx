@@ -18,6 +18,16 @@ export default function Footer() {
         O resultado oficial é proclamado pelo <strong className="text-gray-400">JNE</strong> em
         meados de julho. Este painel não tem vínculo com a ONPE, o JNE ou qualquer campanha.
       </p>
+      <p className="mt-2 text-[10px] text-gray-600">
+        Fotos via Wikimedia Commons: Keiko Fujimori —{" "}
+        <a
+          href="https://commons.wikimedia.org/wiki/File:260406-MITIN-KEIKO-PIURA-064_(cropped).jpg"
+          target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-400"
+        >
+          CarlosEduardoPA, CC BY 4.0
+        </a>
+        ; Roberto Sánchez — Ministerio de la Producción, domínio público.
+      </p>
     </footer>
   );
 }
