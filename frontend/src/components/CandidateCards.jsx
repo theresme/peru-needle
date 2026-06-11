@@ -1,5 +1,6 @@
 import { int, pct } from "../format";
 import { useCountUp } from "../hooks/useCountUp";
+import Avatar, { iniciaisDe } from "./Avatar";
 
 // Seta de momentum: ▲ sobe (verde) · ▼ desce (vermelho).
 // A fatia exata dos votos recentes já aparece no box "Votos na última hora",
@@ -48,11 +49,12 @@ function Card({ c, lider, tendencia }) {
         )}
       </div>
 
-      <div className="mt-4 flex items-end gap-3">
+      <div className="mt-4 flex items-center gap-3">
+        <Avatar id={c.id} cor={c.cor} iniciais={iniciaisDe(c.nome)} size={56} />
         <div className="num text-4xl sm:text-5xl font-extrabold leading-none" style={{ color: c.cor }}>
           {pct(pctAnim, 4)}
         </div>
-        <div className="mb-1">
+        <div className="self-start mt-1">
           <Momentum tendencia={tendencia} />
         </div>
       </div>

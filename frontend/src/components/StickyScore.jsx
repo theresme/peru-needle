@@ -1,34 +1,13 @@
 import { useEffect, useState } from "react";
 import { int } from "../format";
+import Avatar from "./Avatar";
 
 const KEIKO = "#f59e0b";
 const SANCHEZ = "#3b82f6";
 
-// Quadradinho com foto (tenta png/jpg/jpeg/webp em /fotos/<id>.*) ou inicial.
-const EXTS = ["png", "jpg", "jpeg", "webp"];
+// Quadradinho compacto (28px) reaproveitando o Avatar compartilhado.
 function MiniFace({ id, cor, inicial }) {
-  const [i, setI] = useState(0);
-  const falhou = i >= EXTS.length;
-  return (
-    <span
-      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md overflow-hidden"
-      style={{ background: `${cor}22`, boxShadow: `inset 0 0 0 1.5px ${cor}` }}
-    >
-      {!falhou ? (
-        <img
-          src={`/fotos/${id}.${EXTS[i]}`}
-          alt=""
-          className="h-full w-full object-cover"
-          style={{ objectPosition: "center 30%" }}
-          onError={() => setI((n) => n + 1)}
-        />
-      ) : (
-        <span className="num text-[11px] font-extrabold" style={{ color: cor }}>
-          {inicial}
-        </span>
-      )}
-    </span>
-  );
+  return <Avatar id={id} cor={cor} iniciais={inicial} size={28} radius={6} ring={1.5} />;
 }
 
 // Placar fixo no topo: aparece quando o usuário rola além do hero.
@@ -57,7 +36,7 @@ export default function StickyScore({ state }) {
   const favCor = favK ? KEIKO : SANCHEZ;
 
   const fmtPct = (n) =>
-    n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    n.toLocaleString("pt-BR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
 
   return (
     <div
@@ -86,7 +65,7 @@ export default function StickyScore({ state }) {
               {liderIni} +{int(gap)}
             </div>
             <div className="num text-[9px] uppercase tracking-wider text-gray-500">
-              {fmtPct(state.pctApurado ?? 0)}% apurado
+              {(state.pctApurado ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}% apurado
             </div>
           </div>
 

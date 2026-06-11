@@ -2,42 +2,10 @@ import { useEffect, useState } from "react";
 import { int } from "../format";
 import { fetchHistory } from "../api";
 import { useCountUp } from "../hooks/useCountUp";
+import Avatar, { iniciaisDe } from "./Avatar";
 
 const KEIKO = "#f59e0b";
 const SANCHEZ = "#3b82f6";
-
-// Quadrado com a foto do candidato (se existir em /fotos/<id>.png) ou as
-// iniciais como fallback. Pra usar fotos reais: coloque os arquivos em
-// frontend/public/fotos/keiko.png e sanchez.png.
-// Tenta png → jpg → jpeg → webp; se nenhuma existir, mostra as iniciais.
-const EXTS = ["png", "jpg", "jpeg", "webp"];
-function Avatar({ c, size = 56 }) {
-  const [i, setI] = useState(0);
-  const iniciais = c.nome.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-  const falhou = i >= EXTS.length;
-  return (
-    <div
-      className="shrink-0 rounded-xl overflow-hidden flex items-center justify-center"
-      style={{ width: size, height: size, background: `${c.cor}22`, boxShadow: `inset 0 0 0 2px ${c.cor}` }}
-    >
-      {!falhou ? (
-        <img
-          src={`/fotos/${c.id}.${EXTS[i]}`}
-          alt={c.nome}
-          width={size}
-          height={size}
-          className="h-full w-full object-cover"
-          style={{ objectPosition: "center 30%" }}
-          onError={() => setI((n) => n + 1)}
-        />
-      ) : (
-        <span className="num font-extrabold" style={{ color: c.cor, fontSize: size * 0.34 }}>
-          {iniciais}
-        </span>
-      )}
-    </div>
-  );
-}
 
 // Gráfico da diferença (vK - vS) ao longo do tempo. Cruza o zero = virada.
 function GapChart({ history }) {
@@ -116,14 +84,14 @@ export default function VoteGap({ candidatos, tick }) {
       {/* dois candidatos: foto (quadrado) + votos */}
       <div className="mt-4 grid grid-cols-2 gap-3">
         <div className="flex items-center gap-3 rounded-xl bg-panel2 border border-hair p-3">
-          <Avatar c={keiko} size={48} />
+          <Avatar id={keiko.id} cor={keiko.cor} iniciais={iniciaisDe(keiko.nome)} size={48} />
           <div className="min-w-0">
             <div className="text-xs font-semibold" style={{ color: KEIKO }}>Keiko</div>
             <div className="num text-base font-bold text-gray-100 leading-tight">{int(vKAnim)}</div>
           </div>
         </div>
         <div className="flex items-center gap-3 rounded-xl bg-panel2 border border-hair p-3">
-          <Avatar c={sanchez} size={48} />
+          <Avatar id={sanchez.id} cor={sanchez.cor} iniciais={iniciaisDe(sanchez.nome)} size={48} />
           <div className="min-w-0">
             <div className="text-xs font-semibold" style={{ color: SANCHEZ }}>Sánchez</div>
             <div className="num text-base font-bold text-gray-100 leading-tight">{int(vSAnim)}</div>
