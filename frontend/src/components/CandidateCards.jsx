@@ -1,29 +1,28 @@
 import { int, pct } from "../format";
 import { useCountUp } from "../hooks/useCountUp";
 
-// Seta de momentum: ▲ sobe (verde) · ▼ desce (vermelho)
-// Mostra a fatia dos votos recentes que o candidato está levando.
-function Momentum({ tendencia, split }) {
+// Seta de momentum: ▲ sobe (verde) · ▼ desce (vermelho).
+// A fatia exata dos votos recentes já aparece no box "Votos na última hora",
+// então aqui fica só a seta (sem texto redundante).
+function Momentum({ tendencia }) {
   if (!tendencia) return null;
   const sobe = tendencia === "sobe";
   const cor = sobe ? "#10b981" : "#ef4444";
   const seta = sobe ? "▲" : "▼";
-  const label = split != null ? `${Math.round(split)}% dos novos` : "";
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold"
+      className="inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-bold leading-none"
       style={{ background: `${cor}1f`, color: cor }}
       title={sobe
         ? "Ganhando terreno: leva uma fatia dos votos recentes acima da sua média"
         : "Perdendo terreno: leva uma fatia dos votos recentes abaixo da sua média"}
     >
-      <span className="text-xs leading-none">{seta}</span>
-      {label}
+      {seta}
     </span>
   );
 }
 
-function Card({ c, lider, tendencia, split }) {
+function Card({ c, lider, tendencia }) {
   const pctAnim = useCountUp(c.pctAtual);
   const votosAnim = useCountUp(c.votos);
   return (
@@ -54,7 +53,7 @@ function Card({ c, lider, tendencia, split }) {
           {pct(pctAnim, 4)}
         </div>
         <div className="mb-1">
-          <Momentum tendencia={tendencia} split={split} />
+          <Momentum tendencia={tendencia} />
         </div>
       </div>
 
@@ -80,15 +79,10 @@ export default function CandidateCards({ candidatos, ultimaHora }) {
     if (!uh || !uh.suficiente || !uh.subindo) return null;
     return uh.subindo === id ? "sobe" : "desce";
   };
-  const split = (id) => {
-    if (!uh || !uh.suficiente) return null;
-    return id === "keiko" ? uh.splitK : uh.splitS;
-  };
-
   return (
     <div className="flex flex-col sm:flex-row gap-4">
-      <Card c={a} lider={a.id === liderId} tendencia={tend(a.id)} split={split(a.id)} />
-      <Card c={b} lider={b.id === liderId} tendencia={tend(b.id)} split={split(b.id)} />
+      <Card c={a} lider={a.id === liderId} tendencia={tend(a.id)} />
+      <Card c={b} lider={b.id === liderId} tendencia={tend(b.id)} />
     </div>
   );
 }
