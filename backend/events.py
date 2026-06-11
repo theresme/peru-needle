@@ -18,11 +18,18 @@ from __future__ import annotations
 # Expectativa histórica do voto do exterior (2ª volta 2021): ~66.5% Keiko.
 EXT_HIST_KEIKO = 66.5
 
-# Limiares (poll ~60s) para evitar spam.
-SALTO_ATAS = 60          # atas novas em bloco p/ virar notícia
-SWING_PROB_PP = 3.0      # variação de prob. do favorito (pontos %)
-EXT_PASSO_PP = 1.5       # avanço da apuração do exterior
+# Limiares (poll ~60s). Afrouxados de propósito: feed vivo > feed mudo.
+SALTO_ATAS = 25          # atas novas em bloco p/ virar notícia
+SWING_PROB_PP = 1.5      # variação de prob. do favorito (pontos %)
+EXT_PASSO_PP = 0.8       # avanço da apuração do exterior
 DEPT_FECHA = 99.9        # % p/ considerar departamento "fechado"
+LOTE_MIN_VOTOS = 50      # votos novos p/ noticiar o lote e quem o venceu
+PAIS_MIN_ATAS = 3        # atas novas de um país do exterior p/ noticiar
+
+# Marcos de diferença de votos (notícia quando o gap cai abaixo).
+GAP_MARCOS = [100_000, 50_000, 25_000, 15_000, 10_000, 5_000, 2_500, 1_000, 500]
+# Marcos de probabilidade do favorito (notícia ao cruzar p/ cima).
+PROB_MARCOS = [75, 90, 95, 99]
 
 
 def _fmt_int(n) -> str:
@@ -76,10 +83,13 @@ def detectar_eventos(prev: dict | None, novo: dict) -> list[dict]:
                 f"{round(mod.get('pFavorito', 0)*100)}% de probabilidade de vitória "
                 f"(margem final projetada {_fmt_pp(mod.get('margemP50', 0))} pp).", "ctx_modelo")
         if ext.get("pct") is not None and ext.get("pctK") is not None:
-            add("exterior", "🌎", "Voto do exterior mal começou",
-                f"Só {ext.get('pct', 0)}% apurado; tende a Keiko "
-                f"({ext.get('pctK')}%) vs. ~{str(EXT_HIST_KEIKO).replace('.', ',')}% em 2021. "
-                "É o principal curinga restante.", "ctx_ext")
+            pct_ext = ext.get("pct", 0) or 0
+            titulo = ("Voto do exterior mal começou" if pct_ext < 50
+                      else f"Exterior já {str(pct_ext).replace('.', ',')}% apurado")
+            add("exterior", "🌎", titulo,
+                f"{str(pct_ext).replace('.', ',')}% apurado; está em "
+                f"{ext.get('pctK')}% Keiko vs. ~{str(EXT_HIST_KEIKO).replace('.', ',')}% "
+                "em 2021. É o principal curinga restante.", "ctx_ext")
         add("info", "📡", "Monitoramento iniciado",
             "Painel conectado à apuração oficial da ONPE.", "init")
         return eventos
@@ -176,5 +186,99 @@ def detectar_eventos(prev: dict | None, novo: dict) -> list[dict]:
         add("alerta", "⚖️", "Empate técnico",
             f"Margem final projetada caiu para {_fmt_pp(mod_n.get('margemP50', 0))} pp.",
             "empate")
+
+    # --- 9) LOTE: quem venceu os votos novos deste poll -----------------
+    dvK = novo.get("vK", 0) - prev.get("vK", 0)
+    dvS = novo.get("vS", 0) - prev.get("vS", 0)
+    dtot = dvK + dvS
+    if dtot >= LOTE_MIN_VOTOS:
+        split_k = 100.0 * dvK / dtot
+        quem = "Keiko" if dvK >= dvS else "Sánchez"
+        pct_lote = split_k if dvK >= dvS else 100.0 - split_k
+        saldo = abs(dvK - dvS)
+        icone = "🟠" if quem == "Keiko" else "🔵"
+        add("info", icone, f"Lote pende para {quem}",
+            f"{quem} levou {_fmt_pp(pct_lote)}% dos {_fmt_int(dtot)} votos novos "
+            f"(saldo +{_fmt_int(saldo)} no lote"
+            + (f", {_fmt_int(delta)} atas" if delta > 0 else "") + ").", "lote")
+
+    # --- 10) gap cruza marcos (a caçada da virada) ----------------------
+    gap_p = abs(prev.get("vK", 0) - prev.get("vS", 0))
+    gap_n = abs(novo.get("vK", 0) - novo.get("vS", 0))
+    lid_nome = "Keiko" if vk >= vs else "Sánchez"
+    persegue = "Sánchez" if vk >= vs else "Keiko"
+    for marco in reversed(GAP_MARCOS):  # menor marco cruzado = mais dramático
+        if gap_n < marco <= gap_p:
+            quente = marco <= 5_000
+            add("alerta" if quente else "virada", "🔥" if quente else "📏",
+                f"Diferença cai abaixo de {_fmt_int(marco)}!",
+                f"{lid_nome} lidera por só {_fmt_int(gap_n)} votos — "
+                f"{persegue} se aproxima.", f"gap_{marco}")
+            break
+        if gap_p < marco <= gap_n and marco >= 10_000:
+            add("info", "🛡️", f"{lid_nome} amplia a frente",
+                f"Diferença volta a superar {_fmt_int(marco)} votos "
+                f"({_fmt_int(gap_n)}).", f"gapup_{marco}")
+            break
+
+    # --- 11) probabilidade cruza marcos ---------------------------------
+    if pf_p is not None and pf_n is not None and fav_n:
+        fava_nome = "Keiko" if fav_n == "keiko" else "Sánchez"
+        p_fav_p = (pf_p if fav_n == "keiko" else 1 - pf_p) * 100
+        p_fav_n = (pf_n if fav_n == "keiko" else 1 - pf_n) * 100
+        for marco in reversed(PROB_MARCOS):  # maior marco cruzado primeiro
+            if p_fav_p < marco <= p_fav_n:
+                add("virada", "🎯", f"Modelo crava {marco}% para {fava_nome}",
+                    f"Probabilidade de vitória subiu para {round(p_fav_n)}% "
+                    f"(margem projetada {_fmt_pp(mod_n.get('margemP50', 0))} pp).",
+                    f"prob_{marco}")
+                break
+            if p_fav_n < marco <= p_fav_p:
+                add("alerta", "🫨", f"Modelo recua de {marco}%",
+                    f"Probabilidade de {fava_nome} caiu para {round(p_fav_n)}% — "
+                    "o desfecho reabriu.", f"probdown_{marco}")
+                break
+
+    # --- 12) exterior por PAÍS: atas novas / país fechado ---------------
+    paises_p = {p["nombre"]: p for p in prev.get("exteriorPaises", [])}
+    movs = []
+    for p in novo.get("exteriorPaises", []):
+        ant = paises_p.get(p["nombre"])
+        if not ant:
+            continue
+        d_atas = p.get("atasContabilizadas", 0) - ant.get("atasContabilizadas", 0)
+        d_vk = p.get("vK", 0) - ant.get("vK", 0)
+        d_vs = p.get("vS", 0) - ant.get("vS", 0)
+        if d_atas >= PAIS_MIN_ATAS and (d_vk + d_vs) > 0:
+            movs.append((d_vk + d_vs, p, d_atas, d_vk, d_vs))
+        elif ant.get("atasRestantes", 0) > 0 and p.get("atasRestantes", 1) == 0:
+            add("exterior", "🏁", f"{p['nombre']} fechou a apuração",
+                f"100% das atas: {'Keiko' if p['lider'] == 'keiko' else 'Sánchez'} "
+                f"venceu com {_fmt_pp(max(p['pctK'], p['pctS']))}%.",
+                f"pais_fecha_{p['nombre']}")
+    for tot, p, d_atas, d_vk, d_vs in sorted(movs, reverse=True)[:2]:
+        quem = "Keiko" if d_vk >= d_vs else "Sánchez"
+        pct_lote = 100.0 * max(d_vk, d_vs) / tot
+        add("exterior", "🌍", f"{p['nombre']} abriu {_fmt_int(d_atas)} atas",
+            f"{quem} levou {_fmt_pp(pct_lote)}% do lote "
+            f"(+{_fmt_int(abs(d_vk - d_vs))} de saldo). "
+            f"País agora {_fmt_pp(p.get('pctApurado', 0))}% apurado.",
+            f"pais_{p['nombre']}")
+
+    # --- 13) conta-giro: contagem pausa / retoma com ETA -----------------
+    vir_p = prev.get("virada") or {}
+    vir_n = novo.get("virada") or {}
+    if vir_p.get("estado") == "pausada" and vir_n.get("estado") == "contando":
+        eta = vir_n.get("etaMin")
+        extra = (f" No ritmo atual, virada em ~{_fmt_int(eta)} min."
+                 if eta else "")
+        add("info", "▶️", "Contagem retomada",
+            f"Novas atas voltaram a entrar após a pausa.{extra}", "retoma")
+    elif vir_p.get("estado") == "contando" and vir_n.get("estado") == "pausada":
+        add("info", "⏸️", "Contagem dá uma pausa",
+            f"Sem atas novas há {_fmt_int(vir_n.get('minSemMovimento', 0))} min. "
+            "O saldo restante continua "
+            + ("projetando virada." if vir_n.get("projetaVirar") else "sem virada."),
+            "pausa")
 
     return eventos
