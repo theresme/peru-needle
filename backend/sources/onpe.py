@@ -110,13 +110,17 @@ _CONT_PT: dict[str, str] = {
 }
 
 # ubigeoNivel01 do mapa-calor = código do departamento × 10000.
-_DEPT_NOME: dict[int, str] = {
-    1: "Amazonas", 2: "Áncash", 3: "Apurímac", 4: "Arequipa", 5: "Ayacucho",
-    6: "Cajamarca", 7: "Callao", 8: "Cusco", 9: "Huancavelica", 10: "Huánuco",
-    11: "Ica", 12: "Junín", 13: "La Libertad", 14: "Lambayeque", 15: "Lima",
-    16: "Loreto", 17: "Madre de Dios", 18: "Moquegua", 19: "Pasco", 20: "Piura",
-    21: "Puno", 22: "San Martín", 23: "Tacna", 24: "Tumbes", 25: "Ucayali",
-}
+# ATENÇÃO: a ONPE usa ubigeo ELEITORAL (Callao=24, Lima=14, Cusco=7…), que
+# NÃO é o do INEI. Por isso os nomes vêm da própria API (ubigeos/
+# departamentos) e não de tabela hardcoded — já erramos isso uma vez.
+
+
+def _title_es(s: str) -> str:
+    """Title-case respeitando conectivos ('MADRE DE DIOS' → 'Madre de Dios')."""
+    out = (s or "").strip().title()
+    for con in (" De ", " Del ", " La ", " El ", " Y "):
+        out = out.replace(con, con.lower())
+    return out
 
 
 @dataclass
@@ -187,7 +191,7 @@ class OnpeSource:
                 key = (it.get("ubigeoNivel01") or 0) // 10000
                 if key <= 0:
                     continue
-                nombre = _DEPT_NOME.get(key, f"Depto {key}")
+                nombre = (self._nomes_dept or {}).get(key, f"Depto {key}")
             else:
                 # Exterior: cada item é uma circunscrição (país). Usamos o
                 # ubigeo mais específico disponível como chave e o rótulo do
@@ -217,6 +221,21 @@ class OnpeSource:
     # ------------------------------------------------------------------ #
     _nomes_paises: dict[str, tuple[str, str]] | None = None  # ubigeo → (país, continente)
     _continentes: list[str] = []
+    _nomes_dept: dict[int, str] | None = None  # cód. eleitoral → nome oficial
+
+    async def _fetch_nomes_dept(self, session) -> None:
+        """Nomes oficiais dos departamentos (ubigeo ELEITORAL da ONPE)."""
+        if self._nomes_dept is not None:
+            return
+        data = await self._get_json(session, "ubigeos/departamentos", {
+            "idEleccion": self._id_eleccion,
+            "idAmbitoGeografico": AMBITO_NACIONAL,
+        }) or []
+        type(self)._nomes_dept = {
+            int(d["ubigeo"]) // 10000: _title_es(d.get("nombre"))
+            for d in data
+        }
+        log.info("departamentos: %s nomes oficiais carregados", len(data))
 
     async def _fetch_nomes_exterior(self, session) -> None:
         """Carrega (uma vez) os nomes oficiais de continentes e países."""
@@ -331,6 +350,8 @@ class OnpeSource:
     # ------------------------------------------------------------------ #
     async def fetch(self) -> RawTally:
         async with CurlSession(impersonate="chrome124") as session:
+            # nomes oficiais primeiro (1 chamada, cacheada p/ sempre)
+            await self._fetch_nomes_dept(session)
             keiko_map, sanchez_map, ext, ext_paises = await asyncio.gather(
                 self._fetch_mapa(session, ID_FUERZA_POPULAR),
                 self._fetch_mapa(session, ID_JUNTOS_PERU),
