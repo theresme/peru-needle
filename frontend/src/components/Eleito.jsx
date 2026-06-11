@@ -79,7 +79,7 @@ export default function Eleito({ eleito }) {
             {int(eleito.faltamParaCravar)}
           </div>
           <div className="num text-[11px] text-gray-500">
-            ≈ {pct(eleito.faltamPctParaCravar, 0)} do que falta
+            ≈ {pct(eleito.faltamPctParaCravar, 4)} do que falta
           </div>
         </div>
         <div className="rounded-xl bg-panel2 border border-hair p-3">
@@ -87,7 +87,7 @@ export default function Eleito({ eleito }) {
             {CURTO[eleito.perdedor]} vira se levar
           </div>
           <div className="num text-lg font-bold mt-0.5" style={{ color: corA }}>
-            {pct(eleito.perseguidorPrecisaPct, 0)}
+            {pct(eleito.perseguidorPrecisaPct, 4)}
           </div>
           <div className="num text-[11px] text-gray-500">
             dos ~{int(eleito.votosRestEstimados)} votos restantes

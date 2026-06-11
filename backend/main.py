@@ -341,9 +341,9 @@ def compute_eleito(state: dict) -> dict:
         "maxReversivel": int(max_reversivel),   # votos máx. que o líder poderia perder p/ o outro
         "votosRestEstimados": int(rest_est),
         "faltamParaCravar": int(precisa_lider),       # líder: votos a garantir do restante
-        "faltamPctParaCravar": round(100.0 * precisa_lider / rest_est, 1) if rest_est else 0.0,
+        "faltamPctParaCravar": round(100.0 * precisa_lider / rest_est, 4) if rest_est else 0.0,
         "perseguidorPrecisa": int(precisa_atras),     # perseguidor: votos do restante p/ virar
-        "perseguidorPrecisaPct": round(100.0 * precisa_atras / rest_est, 1) if rest_est else 0.0,
+        "perseguidorPrecisaPct": round(100.0 * precisa_atras / rest_est, 4) if rest_est else 0.0,
         # quantos % do restante seria necessário (>100% = impossível pela estimativa)
         "reversivelNaEstimativa": precisa_atras <= rest_est and precisa_atras > 0,
     }
