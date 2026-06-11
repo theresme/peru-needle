@@ -8,6 +8,7 @@ import ViradaCard from "./components/ViradaCard";
 import LastHour from "./components/LastHour";
 import TallyBar from "./components/TallyBar";
 import WhatsLeft from "./components/WhatsLeft";
+import ExteriorPaises from "./components/ExteriorPaises";
 import ExpectedFinal from "./components/ExpectedFinal";
 import EventFeed from "./components/EventFeed";
 import WatchList from "./components/WatchList";
@@ -65,6 +66,8 @@ export default function App() {
                 modelo={state.modelo}
               />
             </div>
+
+            <ExteriorPaises paises={state.exteriorPaises} exterior={state.exterior} />
 
             <EventFeed eventos={state.eventos} />
 

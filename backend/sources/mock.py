@@ -36,7 +36,18 @@ _REGIONS = [
     ("Apurímac", 0.015, 0.20, False),
     ("Tacna", 0.015, 0.46, False),
     ("Otros departamentos", 0.10, 0.41, False),
-    ("Peruanos en el Extranjero", 0.025, 0.665, True),  # lean direita
+    # --- Exterior, desglosado por país (peso ≈ tamanho da comunidade peruana;
+    # lean_final = fração p/ Keiko: o voto do exterior tende à direita, mas
+    # varia por destino). Soma dos pesos = 0.025, igual ao agregado anterior,
+    # para preservar a calibração ~50/50 da demo.
+    ("Chile", 0.0050, 0.58, True),
+    ("Estados Unidos", 0.0045, 0.72, True),
+    ("España", 0.0040, 0.70, True),
+    ("Argentina", 0.0040, 0.55, True),
+    ("Italia", 0.0030, 0.69, True),
+    ("Japón", 0.0020, 0.71, True),
+    ("Brasil", 0.0015, 0.60, True),
+    ("Otros (exterior)", 0.0010, 0.66, True),
 ]
 
 # Atas totais por região, proporcional ao peso.

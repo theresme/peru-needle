@@ -18,6 +18,7 @@ class RegionTally:
     actas_contabilizadas: int
     actas_total: int
     es_exterior: bool = False
+    continente: str = ""  # só p/ países do exterior (ex.: "América")
 
     @property
     def pct_apurado(self) -> float:

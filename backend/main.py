@@ -97,6 +97,29 @@ def build_state(tally: RawTally) -> dict:
 
     total_validos = tally.votos_validos
 
+    # desglose do exterior por país (só publica se houver quebra real)
+    media_ext = ((ext_vK + ext_vS) / ext_contab) if ext_contab else 0.0
+    exterior_paises = []
+    if len(ext) > 1:
+        for r in sorted(ext, key=lambda x: -(x.vK + x.vS)):
+            validos = r.vK + r.vS
+            restantes = max(0, r.actas_total - r.actas_contabilizadas)
+            vpa = (validos / r.actas_contabilizadas) if r.actas_contabilizadas else media_ext
+            exterior_paises.append({
+                "nombre": r.nombre,
+                "continente": r.continente,
+                "vK": r.vK,
+                "vS": r.vS,
+                "pctK": round(100.0 * r.vK / validos, 2) if validos else 0.0,
+                "pctS": round(100.0 * r.vS / validos, 2) if validos else 0.0,
+                "lider": r.lider,
+                "atasContabilizadas": r.actas_contabilizadas,
+                "atasTotal": r.actas_total,
+                "atasRestantes": restantes,
+                "pctApurado": round(r.pct_apurado, 2),
+                "votosRestantesEstimados": int(restantes * vpa),
+            })
+
     por_departamento = [
         {
             "nombre": r.nombre,
@@ -134,6 +157,7 @@ def build_state(tally: RawTally) -> dict:
             "contabilizadas": ext_contab,
             "total": ext_total,
         },
+        "exteriorPaises": exterior_paises,
         "porDepartamento": por_departamento,
         "modelo": model_to_dict(model),
     }
