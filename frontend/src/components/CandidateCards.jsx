@@ -50,8 +50,8 @@ function Card({ c, lider, tendencia, split }) {
       </div>
 
       <div className="mt-4 flex items-end gap-3">
-        <div className="num text-6xl font-extrabold leading-none" style={{ color: c.cor }}>
-          {pct(pctAnim, 1)}
+        <div className="num text-4xl sm:text-5xl font-extrabold leading-none" style={{ color: c.cor }}>
+          {pct(pctAnim, 4)}
         </div>
         <div className="mb-1">
           <Momentum tendencia={tendencia} split={split} />

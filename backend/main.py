@@ -48,7 +48,7 @@ cache = StateCache()
 
 
 def _candidato_dict(c: config.Candidate, votos: int, total_validos: int, proj: float) -> dict:
-    pct = round(100.0 * votos / total_validos, 2) if total_validos else 0.0
+    pct = round(100.0 * votos / total_validos, 4) if total_validos else 0.0
     return {
         "id": c.id,
         "nome": c.nome,
