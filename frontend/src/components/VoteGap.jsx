@@ -9,22 +9,26 @@ const SANCHEZ = "#3b82f6";
 // Quadrado com a foto do candidato (se existir em /fotos/<id>.png) ou as
 // iniciais como fallback. Pra usar fotos reais: coloque os arquivos em
 // frontend/public/fotos/keiko.png e sanchez.png.
+// Tenta png → jpg → jpeg → webp; se nenhuma existir, mostra as iniciais.
+const EXTS = ["png", "jpg", "jpeg", "webp"];
 function Avatar({ c, size = 56 }) {
-  const [erro, setErro] = useState(false);
+  const [i, setI] = useState(0);
   const iniciais = c.nome.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+  const falhou = i >= EXTS.length;
   return (
     <div
       className="shrink-0 rounded-xl overflow-hidden flex items-center justify-center"
       style={{ width: size, height: size, background: `${c.cor}22`, boxShadow: `inset 0 0 0 2px ${c.cor}` }}
     >
-      {!erro ? (
+      {!falhou ? (
         <img
-          src={`/fotos/${c.id}.png`}
+          src={`/fotos/${c.id}.${EXTS[i]}`}
           alt={c.nome}
           width={size}
           height={size}
           className="h-full w-full object-cover"
-          onError={() => setErro(true)}
+          style={{ objectPosition: "center 30%" }}
+          onError={() => setI((n) => n + 1)}
         />
       ) : (
         <span className="num font-extrabold" style={{ color: c.cor, fontSize: size * 0.34 }}>

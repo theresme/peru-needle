@@ -4,20 +4,23 @@ import { int } from "../format";
 const KEIKO = "#f59e0b";
 const SANCHEZ = "#3b82f6";
 
-// Quadradinho com foto (se houver em /fotos/<id>.png) ou inicial.
+// Quadradinho com foto (tenta png/jpg/jpeg/webp em /fotos/<id>.*) ou inicial.
+const EXTS = ["png", "jpg", "jpeg", "webp"];
 function MiniFace({ id, cor, inicial }) {
-  const [erro, setErro] = useState(false);
+  const [i, setI] = useState(0);
+  const falhou = i >= EXTS.length;
   return (
     <span
       className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md overflow-hidden"
       style={{ background: `${cor}22`, boxShadow: `inset 0 0 0 1.5px ${cor}` }}
     >
-      {!erro ? (
+      {!falhou ? (
         <img
-          src={`/fotos/${id}.png`}
+          src={`/fotos/${id}.${EXTS[i]}`}
           alt=""
           className="h-full w-full object-cover"
-          onError={() => setErro(true)}
+          style={{ objectPosition: "center 30%" }}
+          onError={() => setI((n) => n + 1)}
         />
       ) : (
         <span className="num text-[11px] font-extrabold" style={{ color: cor }}>
