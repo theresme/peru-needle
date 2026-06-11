@@ -4,12 +4,12 @@ import Needle from "./components/Needle";
 import Sparkline from "./components/Sparkline";
 import CandidateCards from "./components/CandidateCards";
 import VoteGap from "./components/VoteGap";
-import ViradaCard from "./components/ViradaCard";
 import Eleito from "./components/Eleito";
 import LastHour from "./components/LastHour";
 import TallyBar from "./components/TallyBar";
 import WhatsLeft from "./components/WhatsLeft";
 import ExteriorPaises from "./components/ExteriorPaises";
+import WorldMap from "./components/WorldMap";
 import ExpectedFinal from "./components/ExpectedFinal";
 import EventFeed from "./components/EventFeed";
 import WatchList from "./components/WatchList";
@@ -54,8 +54,6 @@ export default function App() {
 
             <Eleito eleito={state.eleito} />
 
-            <ViradaCard virada={state.virada} />
-
             <LastHour ultimaHora={state.ultimaHora} />
 
             <ExpectedFinal modelo={state.modelo} />
@@ -69,6 +67,8 @@ export default function App() {
                 modelo={state.modelo}
               />
             </div>
+
+            <WorldMap paises={state.exteriorPaises} />
 
             <ExteriorPaises paises={state.exteriorPaises} exterior={state.exterior} />
 

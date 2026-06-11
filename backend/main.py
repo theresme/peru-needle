@@ -109,6 +109,7 @@ def build_state(tally: RawTally) -> dict:
             exterior_paises.append({
                 "nombre": r.nombre,
                 "continente": r.continente,
+                "iso": r.iso,
                 "vK": r.vK,
                 "vS": r.vS,
                 "pctK": round(100.0 * r.vK / validos, 2) if validos else 0.0,

@@ -19,6 +19,7 @@ class RegionTally:
     actas_total: int
     es_exterior: bool = False
     continente: str = ""  # só p/ países do exterior (ex.: "América")
+    iso: str = ""         # ISO-3 do país do exterior (p/ o mapa), ex.: "USA"
 
     @property
     def pct_apurado(self) -> float:

@@ -109,6 +109,32 @@ _CONT_PT: dict[str, str] = {
     "Oceanía": "Oceania",
 }
 
+# Nome (.title() do espanhol, como vem da ONPE) -> ISO-3, p/ colorir o mapa.
+# Países sem entrada (ou ausentes no GeoJSON) simplesmente não pintam.
+_PAIS_ISO: dict[str, str] = {
+    "Estados Unidos De Ámerica": "USA", "Argentina": "ARG", "Bolivia": "BOL",
+    "Brasil": "BRA", "Canadá": "CAN", "Chile": "CHL", "Colombia": "COL",
+    "Costa Rica": "CRI", "Cuba": "CUB", "Ecuador": "ECU", "El Salvador": "SLV",
+    "Guatemala": "GTM", "México": "MEX", "Panamá": "PAN", "Uruguay": "URY",
+    "Paraguay": "PRY", "Venezuela": "VEN", "Nicaragua": "NIC", "Honduras": "HND",
+    "República Dominicana": "DOM", "Puerto Rico": "PRI", "Holanda": "NLD",
+    "España": "ESP", "Italia": "ITA", "Francia": "FRA", "Alemania": "DEU",
+    "Suiza": "CHE", "Bélgica": "BEL", "Gran Bretaña": "GBR", "Suecia": "SWE",
+    "Austria": "AUT", "Dinamarca": "DNK", "Portugal": "PRT",
+    "Gran Ducado De Luxemburgo": "LUX", "Rusia": "RUS", "Noruega": "NOR",
+    "Hungría": "HUN", "Finlandia": "FIN", "República Checa": "CZE",
+    "Polonia": "POL", "Irlanda": "IRL", "Rumanía": "ROU", "Grecia": "GRC",
+    "Malta": "MLT", "Bielorrusia": "BLR", "Macedonia": "MKD",
+    "Japón": "JPN", "Israel": "ISR", "República Popular China": "CHN",
+    "Republica De Corea": "KOR", "Emiratos Árabes Unidos": "ARE",
+    "Jordania": "JOR", "Turquía": "TUR", "Tailandia": "THA", "Catar": "QAT",
+    "Arabia Saudita": "SAU", "India": "IND", "Indonesia": "IDN",
+    "Malasia": "MYS", "Filipinas": "PHL", "Vietnam": "VNM", "Kuwait": "KWT",
+    "Líbano": "LBN", "Irán": "IRN", "Australia": "AUS", "Nueva Zelanda": "NZL",
+    "Sudáfrica": "ZAF", "República Árabe De Egipto": "EGY", "Marruecos": "MAR",
+    "Argelia": "DZA", "Kenia": "KEN", "Ghana": "GHA", "Trinidad Y Tobago": "TTO",
+}
+
 # ubigeoNivel01 do mapa-calor = código do departamento × 10000.
 # ATENÇÃO: a ONPE usa ubigeo ELEITORAL (Callao=24, Lima=14, Cusco=7…), que
 # NÃO é o do INEI. Por isso os nomes vêm da própria API (ubigeos/
@@ -252,14 +278,15 @@ class OnpeSource:
                 "idUbigeoDepartamento": c["ubigeo"],
             }) for c in conts
         ])
-        nomes: dict[str, tuple[str, str]] = {}
+        nomes: dict[str, tuple[str, str, str]] = {}
         for c, paises in zip(conts, listas):
             cont_nome = (c.get("nombre") or "").strip().title()
             cont_nome = _CONT_PT.get(cont_nome, cont_nome)
             for p in paises or []:
-                nome = (p.get("nombre") or "").strip().title()
-                nome = _PAIS_PT.get(nome, nome)
-                nomes[str(p["ubigeo"])] = (nome, cont_nome)
+                raw = (p.get("nombre") or "").strip().title()
+                iso = _PAIS_ISO.get(raw, "")
+                nome = _PAIS_PT.get(raw, raw)
+                nomes[str(p["ubigeo"])] = (nome, cont_nome, iso)
         type(self)._nomes_paises = nomes
         type(self)._continentes = [str(c["ubigeo"]) for c in conts]
         log.info("exterior: %s continentes, %s países mapeados", len(conts), len(nomes))
@@ -308,7 +335,7 @@ class OnpeSource:
 
         regiones: list[RegionTally] = []
         for ub, d in paises.items():
-            nome, cont_nome = (self._nomes_paises or {}).get(ub, (f"País {ub}", ""))
+            nome, cont_nome, iso = (self._nomes_paises or {}).get(ub, (f"País {ub}", "", ""))
             total = round(d["contab"] / (d["pct"] / 100.0)) if d["pct"] > 0 else d["contab"]
             regiones.append(RegionTally(
                 nombre=nome,
@@ -317,6 +344,7 @@ class OnpeSource:
                 actas_total=max(d["contab"], total),
                 es_exterior=True,
                 continente=cont_nome,
+                iso=iso,
             ))
         return regiones
 
