@@ -265,6 +265,16 @@ def detectar_eventos(prev: dict | None, novo: dict) -> list[dict]:
             f"País agora {_fmt_pp(p.get('pctApurado', 0))}% apurado.",
             f"pais_{p['nombre']}")
 
+    # --- 12b) MATEMATICAMENTE ELEITO (o evento da noite) ----------------
+    el_p = (prev.get("eleito") or {}).get("estado")
+    el_n = novo.get("eleito") or {}
+    if el_p == "em_aberto" and el_n.get("estado") == "eleito":
+        nome = "Keiko" if el_n.get("quem") == "keiko" else "Sánchez"
+        add("virada", "🏆", f"{nome} está matematicamente eleito(a)!",
+            f"Mesmo que todos os votos restantes fossem para o adversário, "
+            f"{nome} segue à frente. Vantagem de {_fmt_int(el_n.get('gap', 0))} "
+            f"votos é maior que o máximo que ainda pode entrar.", "eleito")
+
     # --- 13) conta-giro: contagem pausa / retoma com ETA -----------------
     vir_p = prev.get("virada") or {}
     vir_n = novo.get("virada") or {}

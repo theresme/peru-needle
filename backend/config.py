@@ -38,6 +38,11 @@ USER_AGENT: str = os.getenv(
     "peru-needle/1.0 (painel editorial nao-oficial; contato: voce@exemplo.com)",
 )
 
+# Teto DURO de votos válidos por ata (mesa). No Peru cada mesa tem no máx.
+# ~300 eleitores hábeis → usamos isso como limite superior absoluto do que
+# ainda pode entrar por ata pendente, p/ o cálculo de "matematicamente eleito".
+MAX_VOTOS_POR_ACTA: int = int(os.getenv("MAX_VOTOS_POR_ACTA", "300"))
+
 REQUEST_TIMEOUT: float = 15.0
 RETRY_MAX: int = 4
 RETRY_BACKOFF_BASE: float = 1.8  # segundos: base^tentativa

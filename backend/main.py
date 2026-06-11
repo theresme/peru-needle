@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 from collections import deque
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
@@ -292,6 +293,62 @@ def compute_virada(history: deque, cur: dict, modelo: dict) -> dict:
     }
 
 
+def compute_eleito(state: dict) -> dict:
+    """'Matematicamente eleito?': verdade dura, não probabilidade.
+
+    Um candidato está MATEMATICAMENTE eleito quando, mesmo que TODOS os votos
+    que ainda podem entrar fossem para o adversário, ele continuaria à frente.
+    Teto duro do que falta = atas pendentes × máx. votos por ata (mesa).
+
+    Também calcula o "número mágico": quantos dos votos restantes (estimados)
+    o líder precisa garantir para cravar, e o que o perseguidor precisaria.
+    """
+    cands = state.get("candidatos", [])
+    if len(cands) < 2:
+        return {"estado": "indefinido"}
+    k = next((c for c in cands if c["id"] == "keiko"), cands[0])
+    s = next((c for c in cands if c["id"] == "sanchez"), cands[1])
+    lider, atras = (k, s) if k["votos"] >= s["votos"] else (s, k)
+    gap = lider["votos"] - atras["votos"]
+
+    atas = state.get("atas", {})
+    atas_rest = max(0, atas.get("restantes", 0))
+    atas_obs = atas.get("observadas", 0) or 0
+    # teto ABSOLUTO de votos que ainda podem entrar (pior caso p/ o líder):
+    # toda ata pendente lotada (300) indo inteira para o perseguidor.
+    max_reversivel = (atas_rest + atas_obs) * config.MAX_VOTOS_POR_ACTA
+
+    eleito = gap > max_reversivel
+
+    # número mágico (realista): líder precisa de x dos R votos estimados p/
+    # ficar à frente mesmo que o resto vá pro adversário:
+    #   (vL+x) > (vA + R - x)  ->  x > (R - gap)/2
+    rest_est = max(0, state.get("modelo", {}).get("votosRestantesEstimados", 0))
+    precisa_lider = max(0, math.ceil((rest_est - gap) / 2)) if rest_est else 0
+    precisa_lider = min(precisa_lider, rest_est)
+    # quanto o perseguidor precisaria capturar p/ virar (e ainda dá tempo?)
+    precisa_atras = rest_est - precisa_lider  # complemento: o resto todo + reverter o gap
+
+    pct_apurado = state.get("pctApurado", 0)
+    return {
+        "estado": "eleito" if eleito else "em_aberto",
+        "quem": lider["id"],
+        "perdedor": atras["id"],
+        "gap": int(gap),
+        "pctApurado": pct_apurado,
+        "atasRestantes": int(atas_rest),
+        "atasObservadas": int(atas_obs),
+        "maxReversivel": int(max_reversivel),   # votos máx. que o líder poderia perder p/ o outro
+        "votosRestEstimados": int(rest_est),
+        "faltamParaCravar": int(precisa_lider),       # líder: votos a garantir do restante
+        "faltamPctParaCravar": round(100.0 * precisa_lider / rest_est, 1) if rest_est else 0.0,
+        "perseguidorPrecisa": int(precisa_atras),     # perseguidor: votos do restante p/ virar
+        "perseguidorPrecisaPct": round(100.0 * precisa_atras / rest_est, 1) if rest_est else 0.0,
+        # quantos % do restante seria necessário (>100% = impossível pela estimativa)
+        "reversivelNaEstimativa": precisa_atras <= rest_est and precisa_atras > 0,
+    }
+
+
 async def poll_once() -> None:
     source = get_source(config.SOURCE)
     try:
@@ -305,6 +362,7 @@ async def poll_once() -> None:
         }
         state["ultimaHora"] = compute_last_hour(cache.history, cur)
         state["virada"] = compute_virada(cache.history, cur, state["modelo"])
+        state["eleito"] = compute_eleito(state)
         # detecta acontecimentos comparando com o snapshot anterior
         try:
             for ev in detectar_eventos(cache.state, state):
