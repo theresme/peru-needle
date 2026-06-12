@@ -42,6 +42,11 @@ class RawTally:
     actas_contabilizadas: int      # nacional (inclui exterior)
     actas_total: int
     actas_observadas: int = 0
+    # JEE: atas que saíram da contagem normal e estão no Jurado Electoral.
+    # Descoberta jun/2026: contabilizadas + enviadas_jee + pendientes_jee =
+    # total_actas (exato). Ou seja, TODO o voto que falta está no JEE.
+    actas_enviadas_jee: int = 0    # nacional: já no JEE, aguardando resolução
+    actas_pendientes_jee: int = 0  # nacional: a caminho/pendentes no JEE
 
     regiones: list[RegionTally] = field(default_factory=list)
 

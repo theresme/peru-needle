@@ -151,6 +151,11 @@ def build_state(tally: RawTally) -> dict:
             "total": tally.actas_total,
             "observadas": tally.actas_observadas,
             "restantes": max(0, tally.actas_total - tally.actas_contabilizadas),
+            # JEE: contab + enviadas + pendentes = total (exato). O que falta
+            # apurar ESTÁ no JEE — por isso noJee ≈ restantes.
+            "enviadasJee": tally.actas_enviadas_jee,
+            "pendientesJee": tally.actas_pendientes_jee,
+            "noJee": tally.actas_enviadas_jee + tally.actas_pendientes_jee,
         },
         "domestico": dom_block,
         "exterior": {
@@ -317,7 +322,10 @@ def compute_eleito(state: dict) -> dict:
     atas_obs = atas.get("observadas", 0) or 0
     # teto ABSOLUTO de votos que ainda podem entrar (pior caso p/ o líder):
     # toda ata pendente lotada (300) indo inteira para o perseguidor.
-    max_reversivel = (atas_rest + atas_obs) * config.MAX_VOTOS_POR_ACTA
+    # OBS: as atas restantes JÁ SÃO as do JEE (contab+enviadas+pendentes=total),
+    # então `observadas` é subconjunto de `restantes` — não somar (evita
+    # double-count que inflava o teto).
+    max_reversivel = atas_rest * config.MAX_VOTOS_POR_ACTA
 
     eleito = gap > max_reversivel
 
@@ -350,6 +358,78 @@ def compute_eleito(state: dict) -> dict:
     }
 
 
+def compute_jee(tally: RawTally, state: dict) -> dict:
+    """'Onde vivem os votos que faltam?' — o pacote do JEE, dissecado.
+
+    Achado-chave (jun/2026): contabilizadas + enviadas_jee + pendientes_jee =
+    total_actas (exato). Ou seja TODO o voto que ainda falta está travado no
+    Jurado Electoral. Aqui estimamos ONDE essas atas estão (por região) e PRA
+    QUEM pendem, usando o lean OBSERVADO de cada região no seu voto restante.
+
+    O veredito honesto: se as atas do JEE se resolverem no padrão da própria
+    região, qual o saldo líquido — e isso chega pra virar a liderança?
+    """
+    no_jee = tally.actas_enviadas_jee + tally.actas_pendientes_jee
+    if no_jee <= 0:
+        return {"estado": "vazio", "atas": 0}
+
+    gap = tally.vK - tally.vS
+    lider = "keiko" if gap >= 0 else "sanchez"
+    atras = "sanchez" if lider == "keiko" else "keiko"
+    gap_abs = abs(gap)
+
+    # distribuição por região: atas restantes × média da região, com o lean
+    # observado da própria região aplicado ao voto que falta ali.
+    regioes = []
+    net_s = 0.0          # >0 favorece Sánchez
+    votos_est_tot = 0.0
+    for r in tally.regiones:
+        rest = max(0, r.actas_total - r.actas_contabilizadas)
+        tot = r.vK + r.vS
+        if rest <= 0 or tot <= 0:
+            continue
+        media = tot / r.actas_contabilizadas if r.actas_contabilizadas > 0 else 0.0
+        votos = rest * media
+        lean_s = r.vS / tot
+        net = votos * (2.0 * lean_s - 1.0)   # >0 Sánchez, <0 Keiko
+        net_s += net
+        votos_est_tot += votos
+        regioes.append({
+            "nombre": r.nombre,
+            "esExterior": r.es_exterior,
+            "atas": int(rest),
+            "votosEst": int(votos),
+            "pctS": round(100.0 * lean_s, 1),
+            "pctK": round(100.0 * (1.0 - lean_s), 1),
+            "netSanchez": int(round(net)),
+            "lider": "sanchez" if lean_s > 0.5 else "keiko",
+        })
+
+    regioes.sort(key=lambda x: -abs(x["netSanchez"]))
+
+    # saldo líquido a favor de quem está ATRÁS (o que ele precisaria p/ virar)
+    net_para_atras = net_s if atras == "sanchez" else -net_s
+    favorece = "sanchez" if net_s > 0 else "keiko"
+
+    return {
+        "estado": "ativo",
+        "atas": int(no_jee),
+        "enviadas": int(tally.actas_enviadas_jee),
+        "pendientes": int(tally.actas_pendientes_jee),
+        "pctDoTotal": round(100.0 * no_jee / tally.actas_total, 2) if tally.actas_total else 0.0,
+        "votosEstimados": int(votos_est_tot),
+        "netSanchez": int(round(net_s)),   # >0 favorece Sánchez
+        "favorece": favorece,
+        "gap": int(gap_abs),
+        "lider": lider,
+        "atras": atras,
+        # no lean atual de cada região, o pacote do JEE chega pra virar?
+        "viraSeLeanAtual": net_para_atras > gap_abs,
+        "saldoParaAtras": int(round(net_para_atras)),
+        "regioes": regioes[:8],
+    }
+
+
 async def poll_once() -> None:
     source = get_source(config.SOURCE)
     try:
@@ -364,6 +444,7 @@ async def poll_once() -> None:
         state["ultimaHora"] = compute_last_hour(cache.history, cur)
         state["virada"] = compute_virada(cache.history, cur, state["modelo"])
         state["eleito"] = compute_eleito(state)
+        state["jee"] = compute_jee(tally, state)
         # detecta acontecimentos comparando com o snapshot anterior
         try:
             for ev in detectar_eventos(cache.state, state):

@@ -349,6 +349,23 @@ class OnpeSource:
         return regiones
 
     # ------------------------------------------------------------------ #
+    # Totais NACIONAIS oficiais (inclui o desglose do JEE)               #
+    #   contabilizadas + enviadasJee + pendientesJee = totalActas (exato) #
+    # ------------------------------------------------------------------ #
+    async def _fetch_totales_nacional(self, session) -> dict:
+        """`totales` no âmbito 0 = quadro nacional fechado, com JEE.
+
+        Campos: contabilizadas, totalActas, enviadasJee, pendientesJee,
+        totalVotosValidos. O filtro de ubigeo é IGNORADO pela ONPE aqui
+        (sempre devolve o nacional), então só vale como total-país.
+        """
+        return await self._get_json(session, "resumen-general/totales", {
+            "idEleccion": self._id_eleccion,
+            "tipoFiltro": "ambito_geografico",
+            "idAmbitoGeografico": 0,
+        }) or {}
+
+    # ------------------------------------------------------------------ #
     # Exterior: participantes + totales (oficial)                        #
     # ------------------------------------------------------------------ #
     async def _fetch_ambito(self, session, ambito: int) -> _Ambito:
@@ -380,11 +397,12 @@ class OnpeSource:
         async with CurlSession(impersonate="chrome124") as session:
             # nomes oficiais primeiro (1 chamada, cacheada p/ sempre)
             await self._fetch_nomes_dept(session)
-            keiko_map, sanchez_map, ext, ext_paises = await asyncio.gather(
+            keiko_map, sanchez_map, ext, ext_paises, tot_nac = await asyncio.gather(
                 self._fetch_mapa(session, ID_FUERZA_POPULAR),
                 self._fetch_mapa(session, ID_JUNTOS_PERU),
                 self._fetch_ambito(session, AMBITO_EXTRANJERO),
                 self._fetch_exterior_paises(session),
+                self._fetch_totales_nacional(session),
             )
 
         # --- regiões domésticas (oficiais, por departamento) ---
@@ -432,22 +450,31 @@ class OnpeSource:
                 es_exterior=True,
             ))
 
-        # --- nacional = soma de todas as regiões (oficial) ---
+        # --- nacional: votos = soma das regiões (oficial); atas = totais
+        # NACIONAIS oficiais da ONPE (mais exatos que somar estimativas por
+        # região, e trazem o desglose do JEE). Fallback p/ soma se faltar. ---
         vK_nac = sum(r.vK for r in regiones)
         vS_nac = sum(r.vS for r in regiones)
-        contab_nac = sum(r.actas_contabilizadas for r in regiones)
-        total_nac = sum(r.actas_total for r in regiones)
+
+        enviadas_jee = int(tot_nac.get("enviadasJee", 0) or 0)
+        pendientes_jee = int(tot_nac.get("pendientesJee", 0) or 0)
+        contab_nac = int(tot_nac.get("contabilizadas", 0) or 0) or sum(
+            r.actas_contabilizadas for r in regiones)
+        total_nac = int(tot_nac.get("totalActas", 0) or 0) or sum(
+            r.actas_total for r in regiones)
 
         dom_regs = [r for r in regiones if not r.es_exterior]
         log.info(
             "ONPE oficial · Peru: K=%s S=%s (%s/%s atas) · "
-            "Exterior: K=%s S=%s (%s/%s atas) · %s país(es) no desglose",
+            "Exterior: K=%s S=%s (%s/%s atas) · %s país(es) · "
+            "JEE: %s enviadas + %s pendentes (todo o resto que falta)",
             f"{sum(r.vK for r in dom_regs):,}", f"{sum(r.vS for r in dom_regs):,}",
             f"{sum(r.actas_contabilizadas for r in dom_regs):,}",
             f"{sum(r.actas_total for r in dom_regs):,}",
             f"{ext.vK:,}", f"{ext.vS:,}",
             f"{ext.actas_contabilizadas:,}", f"{ext.actas_total:,}",
             len(ext_paises) if ext_paises else 0,
+            f"{enviadas_jee:,}", f"{pendientes_jee:,}",
         )
 
         return RawTally(
@@ -455,7 +482,9 @@ class OnpeSource:
             vS=vS_nac,
             actas_contabilizadas=contab_nac,
             actas_total=total_nac,
-            actas_observadas=ext.actas_enviadas_jee,
+            actas_observadas=enviadas_jee + pendientes_jee,
+            actas_enviadas_jee=enviadas_jee,
+            actas_pendientes_jee=pendientes_jee,
             regiones=regiones,
             fuente="onpe",
         )

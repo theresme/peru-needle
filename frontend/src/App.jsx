@@ -5,6 +5,7 @@ import Sparkline from "./components/Sparkline";
 import CandidateCards from "./components/CandidateCards";
 import VoteGap from "./components/VoteGap";
 import Eleito from "./components/Eleito";
+import JeeCard from "./components/JeeCard";
 import LastHour from "./components/LastHour";
 import TallyBar from "./components/TallyBar";
 import WhatsLeft from "./components/WhatsLeft";
@@ -53,6 +54,8 @@ export default function App() {
             <VoteGap candidatos={state.candidatos} tick={state.timestamp} />
 
             <Eleito eleito={state.eleito} />
+
+            <JeeCard jee={state.jee} />
 
             <LastHour ultimaHora={state.ultimaHora} />
 
